@@ -106,7 +106,7 @@ func IntToLevle(i uint) string {
 }
 
 func init() {
-	log = logger{levle: Info, logPrint: false, maxBackLog: 3, message: make(chan *logmsg, 50)}
+	log = logger{levle: Info, logPrint: true, maxBackLog: 3, message: make(chan *logmsg, 50)}
 	log.fileInit()
 	go log.backWriteLog()
 }

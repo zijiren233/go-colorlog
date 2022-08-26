@@ -19,7 +19,7 @@ func (l *logger) deleteBacLog() {
 	if len(files) <= int(l.maxBackLog) {
 		return
 	}
-	logCount, errCount, logTime, errTime := findLogFile(files)
+	logCount, errCount, logTime, errTime := findLogFile(&files)
 	if logCount > l.maxBackLog {
 		delectLog(logTime, "log")
 	}
@@ -28,14 +28,14 @@ func (l *logger) deleteBacLog() {
 	}
 }
 
-func findLogFile(files []fs.DirEntry) (uint, uint, time.Time, time.Time) {
+func findLogFile(files *[]fs.DirEntry) (uint, uint, time.Time, time.Time) {
 	var (
 		logCount uint
 		errCount uint
 		logTime  = time.Now()
 		errTime  = time.Now()
 	)
-	for _, file := range files {
+	for _, file := range *files {
 		s := backre.FindStringSubmatch(file.Name())
 		if len(s) != 3 {
 			continue
@@ -44,13 +44,13 @@ func findLogFile(files []fs.DirEntry) (uint, uint, time.Time, time.Time) {
 		case "log":
 			logCount++
 			t, _ := time.Parse("2006_01_02_15_04_05", s[1])
-			if t.Before(logTime) {
+			if t.After(logTime) {
 				logTime = t
 			}
 		case "err":
 			errCount++
 			t, _ := time.Parse("2006_01_02_15_04_05", s[1])
-			if t.Before(errTime) {
+			if t.After(errTime) {
 				errTime = t
 			}
 		default:
