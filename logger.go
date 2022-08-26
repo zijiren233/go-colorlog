@@ -1,21 +1,15 @@
-package logger
+package log
 
 import (
 	"fmt"
 	"os"
-	"path"
-	"regexp"
-	"runtime"
 	"strings"
 	"time"
 
 	"github.com/mattn/go-colorable"
 )
 
-var (
-	log       logger
-	backre, _ = regexp.Compile(`^(\d{4}_\d{2}_\d{2}_\d{2}_\d{2}_\d{2})_(.*?).log`)
-)
+var log logger
 
 const (
 	Debug uint = iota
@@ -38,12 +32,12 @@ const (
 )
 
 type logger struct {
-	levle        uint
-	disableprint bool
-	fileOBJ      *os.File
-	errFileOBJ   *os.File
-	message      chan *logmsg
-	maxBackLog   uint
+	levle      uint
+	logPrint   bool
+	fileOBJ    *os.File
+	errFileOBJ *os.File
+	message    chan *logmsg
+	maxBackLog uint
 }
 
 type logmsg struct {
@@ -112,17 +106,17 @@ func IntToLevle(i uint) string {
 }
 
 func init() {
-	log = logger{levle: Info, disableprint: false, maxBackLog: 3, message: make(chan *logmsg, 50)}
+	log = logger{levle: Info, logPrint: false, maxBackLog: 3, message: make(chan *logmsg, 50)}
 	log.fileInit()
 	go log.backWriteLog()
 }
 
-func DisableLogPrint() {
-	log.disableprint = true
+func LogPrint(v bool) {
+	log.logPrint = v
 }
 
-func EnableLogPrint() {
-	log.disableprint = false
+func SetLogLevle(levle uint) {
+	log.levle = levle
 }
 
 func (l *logger) fileInit() {
@@ -141,27 +135,6 @@ func (l *logger) fileInit() {
 	}
 	l.fileOBJ = f
 	l.errFileOBJ = ef
-}
-
-func (l *logger) backupLog() {
-	file, _ := l.fileOBJ.Stat()
-	// 2M
-	if file.Size() >= 2097152 {
-		l.fileOBJ.Close()
-		os.Rename(`./logs/log.log`, fmt.Sprint(`./logs/`, time.Now().Format("2006_01_02_15_04_05_log.log")))
-		f, _ := os.OpenFile("./logs/log.log", os.O_APPEND|os.O_WRONLY|os.O_CREATE, os.ModePerm)
-		l.fileOBJ = f
-	}
-}
-
-func (l *logger) backupErrLog() {
-	file, _ := l.errFileOBJ.Stat()
-	if file.Size() >= 2097152 {
-		l.errFileOBJ.Close()
-		os.Rename(`./logs/err.log`, fmt.Sprint(`./logs/`, time.Now().Format("2006_01_02_15_04_05_err.log")))
-		f, _ := os.OpenFile("./logs/err.log", os.O_APPEND|os.O_WRONLY|os.O_CREATE, os.ModePerm)
-		l.errFileOBJ = f
-	}
 }
 
 func (l *logger) log(levle uint, format string, a ...interface{}) {
@@ -191,10 +164,6 @@ func (l *logger) log(levle uint, format string, a ...interface{}) {
 	}
 }
 
-func SetLogLevle(levle uint) {
-	log.levle = levle
-}
-
 func (l *logger) backWriteLog() {
 	var msgtmp *logmsg
 	stdout := colorable.NewColorableStdout()
@@ -207,7 +176,7 @@ func (l *logger) backWriteLog() {
 		} else {
 			fmt.Fprintf(l.fileOBJ, "%s [%s] %s\n", msgtmp.now, IntToLevle(msgtmp.levle), msgtmp.message)
 		}
-		if !l.disableprint {
+		if l.logPrint {
 			fmt.Fprintf(stdout, "%s |%s %s %s| %s\n", msgtmp.now, levleColor(msgtmp.levle), IntToLevle(msgtmp.levle), reset, msgtmp.message)
 		}
 		if msgtmp.levle >= Error {
@@ -219,65 +188,6 @@ func (l *logger) backWriteLog() {
 			}
 		}
 	}
-}
-
-func (l *logger) deleteBacLog() {
-	files, err := os.ReadDir("./logs")
-	if err != nil {
-		Errorf("索引 logs 文件失败!")
-		return
-	}
-	var (
-		logCount uint
-		errCount uint
-		logTime  = make(map[time.Time]string)
-		errTime  = make(map[time.Time]string)
-	)
-	for _, file := range files {
-		s := backre.FindStringSubmatch(file.Name())
-		if len(s) != 3 {
-			continue
-		}
-		switch s[2] {
-		case "log":
-			logCount++
-			t, _ := time.Parse("2006_01_02_15_04_05", s[1])
-			logTime[t] = file.Name()
-		case "err":
-			errCount++
-			t, _ := time.Parse("2006_01_02_15_04_05", s[1])
-			errTime[t] = file.Name()
-		default:
-		}
-	}
-	var (
-		earliestLog = time.Now()
-		earliestErr = time.Now()
-	)
-	if logCount > l.maxBackLog {
-		for k := range logTime {
-			if k.After(earliestLog) {
-				earliestLog = k
-			}
-		}
-		os.Remove("./logs/" + logTime[earliestLog])
-	}
-	if errCount > l.maxBackLog {
-		for k := range logTime {
-			if k.After(earliestErr) {
-				earliestErr = k
-			}
-		}
-		os.Remove("./logs/" + logTime[earliestErr])
-	}
-}
-
-func getInfo() (string, string, int) {
-	pc, file, line, ok := runtime.Caller(3)
-	if !ok {
-		return "", "", 0
-	}
-	return path.Base(file), path.Base(runtime.FuncForPC(pc).Name()), line
 }
 
 func Debugf(format string, a ...interface{}) {
