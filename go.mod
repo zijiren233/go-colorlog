@@ -1,4 +1,4 @@
-module github.com/zijiren233/go-colorLog
+module github.com/zijiren233/go-colorlog
 
 go 1.19
 
