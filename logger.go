@@ -3,13 +3,17 @@ package colorlog
 import (
 	"fmt"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/mattn/go-colorable"
 )
 
-var log logger
+var (
+	log logger
+
+	colorStdout    = colorable.NewColorableStdout()
+	NonColorStdout = colorable.NewNonColorable(os.Stdout)
+)
 
 const (
 	Debug uint = iota
@@ -34,6 +38,7 @@ const (
 type logger struct {
 	levle      uint
 	logPrint   bool
+	logColor   bool
 	fileOBJ    *os.File
 	errFileOBJ *os.File
 	message    chan *logmsg
@@ -49,70 +54,18 @@ type logmsg struct {
 	line     int
 }
 
-func levleColor(levle uint) string {
-	switch levle {
-	case Debug:
-		return blue
-	case Info:
-		return green
-	case Warning:
-		return yellow
-	case Error:
-		return red
-	case Fatal:
-		return magenta
-	default:
-		return red
-	}
-}
-
-func LevleToInt(s string) uint {
-	s = strings.ToLower(s)
-	switch s {
-	case "debug":
-		return Debug
-	case "info":
-		return Info
-	case "warning":
-		return Warning
-	case "error":
-		return Error
-	case "fatal":
-		return Fatal
-	case "none":
-		return None
-	default:
-		return Debug
-	}
-}
-
-func IntToLevle(i uint) string {
-	switch i {
-	case Debug:
-		return "DEBUG"
-	case Info:
-		return "INFO"
-	case Warning:
-		return "WARNING"
-	case Error:
-		return "ERROR"
-	case Fatal:
-		return "FATAL"
-	case None:
-		return "NONE"
-	default:
-		return "DEBUG"
-	}
-}
-
 func init() {
-	log = logger{levle: Info, logPrint: true, maxBackLog: 3, message: make(chan *logmsg, 50)}
+	log = logger{levle: Info, logPrint: true, logColor: true, maxBackLog: 3, message: make(chan *logmsg, 50)}
 	log.fileInit()
 	go log.backWriteLog()
 }
 
-func LogPrint(v bool) {
+func EnableLogPrint(v bool) {
 	log.logPrint = v
+}
+
+func EnableColor(v bool) {
+	log.logColor = v
 }
 
 func SetLogLevle(levle uint) {
@@ -166,26 +119,14 @@ func (l *logger) log(levle uint, format string, a ...interface{}) {
 
 func (l *logger) backWriteLog() {
 	var msgtmp *logmsg
-	stdout := colorable.NewColorableStdout()
-	for {
+	for msgtmp = range l.message {
 		l.deleteBacLog()
-		msgtmp = <-l.message
 		l.backupLog()
-		if l.levle == Debug {
-			fmt.Fprintf(l.fileOBJ, "%s [%s] [%s|%s|%d] %s\n", msgtmp.now, IntToLevle(msgtmp.levle), msgtmp.filename, msgtmp.funcName, msgtmp.line, msgtmp.message)
-		} else {
-			fmt.Fprintf(l.fileOBJ, "%s [%s] %s\n", msgtmp.now, IntToLevle(msgtmp.levle), msgtmp.message)
-		}
-		if l.logPrint {
-			fmt.Fprintf(stdout, "%s |%s %s %s| %s\n", msgtmp.now, levleColor(msgtmp.levle), IntToLevle(msgtmp.levle), reset, msgtmp.message)
-		}
+		l.writeToFile(msgtmp, l.fileOBJ)
+		l.logprint(msgtmp)
 		if msgtmp.levle >= Error {
 			l.backupErrLog()
-			if l.levle == Debug {
-				fmt.Fprintf(l.errFileOBJ, "%s [%s] [%s|%s|%d] %s\n", msgtmp.now, IntToLevle(msgtmp.levle), msgtmp.filename, msgtmp.funcName, msgtmp.line, msgtmp.message)
-			} else {
-				fmt.Fprintf(l.errFileOBJ, "%s [%s] %s\n", msgtmp.now, IntToLevle(msgtmp.levle), msgtmp.message)
-			}
+			l.writeToFile(msgtmp, l.errFileOBJ)
 		}
 	}
 }
