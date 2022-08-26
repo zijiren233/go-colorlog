@@ -2,6 +2,7 @@ package log
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
 	"regexp"
 	"time"
@@ -18,6 +19,16 @@ func (l *logger) deleteBacLog() {
 	if len(files) <= int(l.maxBackLog) {
 		return
 	}
+	logCount, errCount, logTime, errTime := findLogFile(files)
+	if logCount > l.maxBackLog {
+		delectLog(logTime, "log")
+	}
+	if errCount > l.maxBackLog {
+		delectLog(errTime, "err")
+	}
+}
+
+func findLogFile(files []fs.DirEntry) (uint, uint, time.Time, time.Time) {
 	var (
 		logCount uint
 		errCount uint
@@ -45,12 +56,7 @@ func (l *logger) deleteBacLog() {
 		default:
 		}
 	}
-	if logCount > l.maxBackLog {
-		delectLog(errTime, "log")
-	}
-	if errCount > l.maxBackLog {
-		delectLog(errTime, "err")
-	}
+	return logCount, errCount, logTime, errTime
 }
 
 func delectLog(fileTime time.Time, types string) {
