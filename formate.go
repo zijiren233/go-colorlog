@@ -15,10 +15,6 @@ func (l *logger) writeToFile(msgtmp *logmsg, FileOBJ *os.File) {
 
 func (l *logger) logprint(msgtmp *logmsg) {
 	if l.logPrint {
-		if l.logColor {
-			fmt.Fprintf(colorStdout, "%s |%s %s %s| %s\n", msgtmp.now, levleColor(msgtmp.levle), IntToLevle(msgtmp.levle), reset, msgtmp.message)
-		} else {
-			fmt.Fprintf(NonColorStdout, "%s |%s %s %s| %s\n", msgtmp.now, levleColor(msgtmp.levle), IntToLevle(msgtmp.levle), reset, msgtmp.message)
-		}
+		fmt.Fprintf(l.stdout, "%s |%s %s %s| %s\n", msgtmp.now, levleColor(msgtmp.levle), IntToLevle(msgtmp.levle), reset, msgtmp.message)
 	}
 }

@@ -2,6 +2,7 @@ package colorlog
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"time"
 
@@ -12,7 +13,7 @@ var (
 	log logger
 
 	colorStdout    = colorable.NewColorableStdout()
-	NonColorStdout = colorable.NewNonColorable(os.Stdout)
+	nonColorStdout = colorable.NewNonColorable(os.Stdout)
 )
 
 const (
@@ -38,9 +39,9 @@ const (
 type logger struct {
 	levle      uint
 	logPrint   bool
-	logColor   bool
 	fileOBJ    *os.File
 	errFileOBJ *os.File
+	stdout     io.Writer
 	message    chan *logmsg
 	maxBackLog uint
 }
@@ -55,7 +56,7 @@ type logmsg struct {
 }
 
 func init() {
-	log = logger{levle: Info, logPrint: true, logColor: true, maxBackLog: 3, message: make(chan *logmsg, 50)}
+	log = logger{levle: Info, logPrint: true, stdout: colorStdout, maxBackLog: 3, message: make(chan *logmsg, 50)}
 	log.fileInit()
 	go log.backWriteLog()
 }
@@ -65,7 +66,11 @@ func EnableLogPrint(v bool) {
 }
 
 func EnableColor(v bool) {
-	log.logColor = v
+	if v {
+		log.stdout = colorStdout
+	} else {
+		log.stdout = nonColorStdout
+	}
 }
 
 func SetLogLevle(levle uint) {
