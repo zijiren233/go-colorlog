@@ -10,7 +10,8 @@ import (
 )
 
 var (
-	log logger
+	log         logger
+	timeFormate = "[2006-01-02 15:04:05]"
 
 	colorStdout    = colorable.NewColorableStdout()
 	nonColorStdout = colorable.NewNonColorable(os.Stdout)
@@ -23,17 +24,6 @@ const (
 	Error
 	Fatal
 	None
-)
-
-const (
-	green   = "\033[97;42m"
-	white   = "\033[90;47m"
-	yellow  = "\033[90;43m"
-	red     = "\033[97;41m"
-	blue    = "\033[97;44m"
-	magenta = "\033[97;45m"
-	cyan    = "\033[97;46m"
-	reset   = "\033[0m"
 )
 
 type logger struct {
@@ -73,6 +63,10 @@ func EnableColor(v bool) {
 	}
 }
 
+func SetTimeFormate(Formate string) {
+	timeFormate = Formate
+}
+
 func SetLogLevle(levle uint) {
 	log.levle = levle
 }
@@ -103,7 +97,7 @@ func (l *logger) log(levle uint, format string, a ...interface{}) {
 			log = logmsg{
 				levle:    levle,
 				message:  fmt.Sprintf(format, a...),
-				now:      time.Now().Format("[2006-01-02 15:04:05]"),
+				now:      time.Now().Format(timeFormate),
 				funcName: funcName,
 				filename: filename,
 				line:     line,
@@ -112,7 +106,7 @@ func (l *logger) log(levle uint, format string, a ...interface{}) {
 			log = logmsg{
 				levle:   levle,
 				message: fmt.Sprintf(format, a...),
-				now:     time.Now().Format("[2006-01-02 15:04:05]"),
+				now:     time.Now().Format(timeFormate),
 			}
 		}
 		select {
