@@ -71,6 +71,10 @@ func SetLogLevle(levle uint) {
 	log.levle = levle
 }
 
+func MaxLogFile(count uint) {
+	log.maxBackLog = count
+}
+
 func (l *logger) fileInit() {
 	if !FileExists("./logs") {
 		os.Mkdir("./logs", os.ModePerm)
@@ -128,6 +132,8 @@ func (l *logger) backWriteLog() {
 			l.writeToFile(msgtmp, l.errFileOBJ)
 		}
 	}
+	l.fileOBJ.Close()
+	l.errFileOBJ.Close()
 }
 
 func Debugf(format string, a ...interface{}) {
