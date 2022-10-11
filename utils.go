@@ -9,15 +9,15 @@ import (
 
 func levleColor(levle uint) string {
 	switch levle {
-	case debug:
+	case L_Debug:
 		return blue
-	case info:
+	case L_Info:
 		return green
-	case warning:
+	case L_Warning:
 		return yellow
-	case err:
+	case L_Error:
 		return red
-	case fatal:
+	case L_Fatal:
 		return magenta
 	default:
 		return red
@@ -28,35 +28,35 @@ func LevleToInt(s string) uint {
 	s = strings.ToLower(s)
 	switch s {
 	case "debug":
-		return debug
+		return L_Debug
 	case "info":
-		return info
+		return L_Info
 	case "warning":
-		return warning
+		return L_Warning
 	case "error":
-		return err
+		return L_Error
 	case "fatal":
-		return fatal
+		return L_Fatal
 	case "none":
-		return none
+		return L_None
 	default:
-		return debug
+		return L_Debug
 	}
 }
 
 func IntToLevle(i uint) string {
 	switch i {
-	case debug:
+	case L_Debug:
 		return "DEBUG"
-	case info:
+	case L_Info:
 		return "INFO"
-	case warning:
+	case L_Warning:
 		return "WARNING"
-	case err:
+	case L_Error:
 		return "ERROR"
-	case fatal:
+	case L_Fatal:
 		return "FATAL"
-	case none:
+	case L_None:
 		return "NONE"
 	default:
 		return "DEBUG"
