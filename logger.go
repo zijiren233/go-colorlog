@@ -18,12 +18,12 @@ var (
 )
 
 const (
-	Debug uint = iota
-	Info
-	Warning
-	Error
-	Fatal
-	None
+	debug uint = iota
+	info
+	warning
+	err
+	fatal
+	none
 )
 
 type logger struct {
@@ -46,7 +46,7 @@ type logmsg struct {
 }
 
 func init() {
-	log = logger{levle: Info, logPrint: true, stdout: colorStdout, maxBackLog: 3, message: make(chan *logmsg, 50)}
+	log = logger{levle: info, logPrint: true, stdout: colorStdout, maxBackLog: 3, message: make(chan *logmsg, 50)}
 	log.fileInit()
 	go log.backWriteLog()
 }
@@ -96,7 +96,7 @@ func (l *logger) fileInit() {
 func (l *logger) log(levle uint, format string, a ...interface{}) {
 	if l.levle <= levle {
 		var log logmsg
-		if l.levle == Debug {
+		if l.levle == debug {
 			filename, funcName, line := getInfo()
 			log = logmsg{
 				levle:    levle,
@@ -127,7 +127,7 @@ func (l *logger) backWriteLog() {
 		l.backupLog()
 		l.writeToFile(msgtmp, l.fileOBJ)
 		l.logprint(msgtmp)
-		if msgtmp.levle >= Error {
+		if msgtmp.levle >= err {
 			l.backupErrLog()
 			l.writeToFile(msgtmp, l.errFileOBJ)
 		}
@@ -137,21 +137,21 @@ func (l *logger) backWriteLog() {
 }
 
 func Debugf(format string, a ...interface{}) {
-	log.log(Debug, format, a...)
+	log.log(debug, format, a...)
 }
 
 func Infof(format string, a ...interface{}) {
-	log.log(Info, format, a...)
+	log.log(info, format, a...)
 }
 
 func Warringf(format string, a ...interface{}) {
-	log.log(Warning, format, a...)
+	log.log(warning, format, a...)
 }
 
 func Errorf(format string, a ...interface{}) {
-	log.log(Error, format, a...)
+	log.log(err, format, a...)
 }
 
 func Fatalf(format string, a ...interface{}) {
-	log.log(Fatal, format, a...)
+	log.log(fatal, format, a...)
 }
