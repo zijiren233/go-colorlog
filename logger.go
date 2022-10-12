@@ -113,6 +113,7 @@ func (l *logger) log(levle uint, format string, a ...interface{}) {
 				now:     time.Now().Format(timeFormate),
 			}
 		}
+		l.logprint(&log)
 		select {
 		case l.message <- &log:
 		default:
@@ -126,7 +127,6 @@ func (l *logger) backWriteLog() {
 		l.deleteBacLog()
 		l.backupLog()
 		l.writeToFile(msgtmp, l.fileOBJ)
-		l.logprint(msgtmp)
 		if msgtmp.levle >= L_Error {
 			l.backupErrLog()
 			l.writeToFile(msgtmp, l.errFileOBJ)
