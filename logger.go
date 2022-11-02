@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	log         logger
+	log         = logger{levle: L_Info, logPrint: true, stdout: colorStdout, maxBackLog: 3, message: make(chan *logmsg, 50)}
 	timeFormate = "[2006-01-02 15:04:05]"
 
 	colorStdout    = colorable.NewColorableStdout()
@@ -46,7 +46,6 @@ type logmsg struct {
 }
 
 func init() {
-	log = logger{levle: L_Info, logPrint: true, stdout: colorStdout, maxBackLog: 3, message: make(chan *logmsg, 50)}
 	log.fileInit()
 	go log.backWriteLog()
 }
@@ -93,12 +92,12 @@ func (l *logger) fileInit() {
 	l.errFileOBJ = ef
 }
 
-func (l *logger) log(levle uint, format string, a ...interface{}) {
-	if l.levle <= levle {
-		var log logmsg
-		if l.levle == L_Debug {
+func logd(levle uint, format string, a ...interface{}) {
+	if log.levle <= levle {
+		var msg logmsg
+		if log.levle == L_Debug {
 			filename, funcName, line := getInfo()
-			log = logmsg{
+			msg = logmsg{
 				levle:    levle,
 				message:  fmt.Sprintf(format, a...),
 				now:      time.Now().Format(timeFormate),
@@ -107,15 +106,15 @@ func (l *logger) log(levle uint, format string, a ...interface{}) {
 				line:     line,
 			}
 		} else {
-			log = logmsg{
+			msg = logmsg{
 				levle:   levle,
 				message: fmt.Sprintf(format, a...),
 				now:     time.Now().Format(timeFormate),
 			}
 		}
-		l.logprint(&log)
+		log.logprint(&msg)
 		select {
-		case l.message <- &log:
+		case log.message <- &msg:
 		default:
 		}
 	}
@@ -137,21 +136,21 @@ func (l *logger) backWriteLog() {
 }
 
 func Debugf(format string, a ...interface{}) {
-	log.log(L_Debug, format, a...)
+	logd(L_Debug, format, a...)
 }
 
 func Infof(format string, a ...interface{}) {
-	log.log(L_Info, format, a...)
+	logd(L_Info, format, a...)
 }
 
 func Warringf(format string, a ...interface{}) {
-	log.log(L_Warning, format, a...)
+	logd(L_Warning, format, a...)
 }
 
 func Errorf(format string, a ...interface{}) {
-	log.log(L_Error, format, a...)
+	logd(L_Error, format, a...)
 }
 
 func Fatalf(format string, a ...interface{}) {
-	log.log(L_Fatal, format, a...)
+	logd(L_Fatal, format, a...)
 }
