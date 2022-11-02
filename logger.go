@@ -92,7 +92,7 @@ func (l *logger) fileInit() {
 	l.errFileOBJ = ef
 }
 
-func logd(levle uint, format string, a ...interface{}) {
+func logfd(levle uint, format string, a ...interface{}) {
 	if log.levle <= levle {
 		var msg logmsg
 		if log.levle == L_Debug {
@@ -120,6 +120,34 @@ func logd(levle uint, format string, a ...interface{}) {
 	}
 }
 
+func logd(levle uint, a ...interface{}) {
+	if log.levle <= levle {
+		var msg logmsg
+		if log.levle == L_Debug {
+			filename, funcName, line := getInfo()
+			msg = logmsg{
+				levle:    levle,
+				message:  fmt.Sprint(a...),
+				now:      time.Now().Format(timeFormate),
+				funcName: funcName,
+				filename: filename,
+				line:     line,
+			}
+		} else {
+			msg = logmsg{
+				levle:   levle,
+				message: fmt.Sprint(a...),
+				now:     time.Now().Format(timeFormate),
+			}
+		}
+		log.logprint(&msg)
+		select {
+		case log.message <- &msg:
+		default:
+		}
+	}
+}
+
 func (l *logger) backWriteLog() {
 	var msgtmp *logmsg
 	for msgtmp = range l.message {
@@ -133,24 +161,4 @@ func (l *logger) backWriteLog() {
 	}
 	l.fileOBJ.Close()
 	l.errFileOBJ.Close()
-}
-
-func Debugf(format string, a ...interface{}) {
-	logd(L_Debug, format, a...)
-}
-
-func Infof(format string, a ...interface{}) {
-	logd(L_Info, format, a...)
-}
-
-func Warringf(format string, a ...interface{}) {
-	logd(L_Warning, format, a...)
-}
-
-func Errorf(format string, a ...interface{}) {
-	logd(L_Error, format, a...)
-}
-
-func Fatalf(format string, a ...interface{}) {
-	logd(L_Fatal, format, a...)
 }
