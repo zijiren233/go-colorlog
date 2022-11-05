@@ -44,13 +44,13 @@ func findLogFile(files *[]fs.DirEntry) (uint, uint, time.Time, time.Time) {
 		case "log":
 			logCount++
 			t, _ := time.Parse("2006_01_02_15_04_05", s[1])
-			if t.After(logTime) {
+			if t.Before(logTime) {
 				logTime = t
 			}
 		case "err":
 			errCount++
 			t, _ := time.Parse("2006_01_02_15_04_05", s[1])
-			if t.After(errTime) {
+			if t.Before(errTime) {
 				errTime = t
 			}
 		default:
