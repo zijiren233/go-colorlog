@@ -1,6 +1,7 @@
 package colorlog
 
 import (
+	"bufio"
 	"fmt"
 	"io"
 	"os"
@@ -10,7 +11,7 @@ import (
 )
 
 var (
-	log         = logger{levle: L_Info, logPrint: true, stdout: colorStdout, maxBackLog: 3, message: make(chan *logmsg, 50)}
+	log         = logger{levle: L_Info, logPrint: true, stdout: colorStdout, maxBackLog: 3, message: make(chan *logmsg, 100)}
 	timeFormate = "[2006-01-02 15:04:05]"
 
 	colorStdout    = colorable.NewColorableStdout()
@@ -31,6 +32,8 @@ type logger struct {
 	logPrint   bool
 	fileOBJ    *os.File
 	errFileOBJ *os.File
+	logFile    *bufio.Writer
+	errFile    *bufio.Writer
 	stdout     io.Writer
 	message    chan *logmsg
 	maxBackLog uint
@@ -80,16 +83,18 @@ func (l *logger) fileInit() {
 	}
 	f, err := os.OpenFile("./logs/log.log", os.O_APPEND|os.O_WRONLY|os.O_CREATE, os.ModePerm)
 	if err != nil {
-		fmt.Println("打开日志错误!")
+		l.logprint(&logmsg{levle: L_Fatal, message: "Open log.log err: " + err.Error(), now: time.Now().Format(timeFormate)})
 		panic(err)
 	}
-	ef, err2 := os.OpenFile("./logs/err.log", os.O_APPEND|os.O_WRONLY|os.O_CREATE, os.ModePerm)
+	ef, err := os.OpenFile("./logs/err.log", os.O_APPEND|os.O_WRONLY|os.O_CREATE, os.ModePerm)
 	if err != nil {
-		fmt.Println("打开Err日志错误!")
-		panic(err2)
+		l.logprint(&logmsg{levle: L_Fatal, message: "Open err.log err: " + err.Error(), now: time.Now().Format(timeFormate)})
+		panic(err)
 	}
 	l.fileOBJ = f
+	l.logFile = bufio.NewWriter(f)
 	l.errFileOBJ = ef
+	l.errFile = bufio.NewWriter(ef)
 }
 
 func logfd(levle uint, format string, a ...interface{}) {
@@ -112,11 +117,11 @@ func logfd(levle uint, format string, a ...interface{}) {
 				now:     time.Now().Format(timeFormate),
 			}
 		}
-		log.logprint(&msg)
 		select {
 		case log.message <- &msg:
 		default:
 		}
+		log.logprint(&msg)
 	}
 }
 
@@ -140,25 +145,26 @@ func logd(levle uint, a ...interface{}) {
 				now:     time.Now().Format(timeFormate),
 			}
 		}
-		log.logprint(&msg)
 		select {
 		case log.message <- &msg:
 		default:
 		}
+		log.logprint(&msg)
 	}
 }
 
 func (l *logger) backWriteLog() {
-	var msgtmp *logmsg
-	for msgtmp = range l.message {
+	for msgtmp := range l.message {
 		l.deleteBacLog()
 		l.backupLog()
-		l.writeToFile(msgtmp, l.fileOBJ)
+		l.writeToFile(msgtmp, l.logFile)
 		if msgtmp.levle >= L_Error {
 			l.backupErrLog()
-			l.writeToFile(msgtmp, l.errFileOBJ)
+			l.writeToFile(msgtmp, l.errFile)
 		}
 	}
+	l.logFile.Flush()
 	l.fileOBJ.Close()
+	l.errFile.Flush()
 	l.errFileOBJ.Close()
 }

@@ -1,15 +1,15 @@
 package colorlog
 
 import (
+	"bufio"
 	"fmt"
-	"os"
 )
 
-func (l *logger) writeToFile(msgtmp *logmsg, FileOBJ *os.File) {
+func (l *logger) writeToFile(msgtmp *logmsg, file *bufio.Writer) {
 	if l.levle == L_Debug {
-		fmt.Fprintf(FileOBJ, "%s [%s] [%s|%s|%d] %s\n", msgtmp.now, IntToLevle(msgtmp.levle), msgtmp.filename, msgtmp.funcName, msgtmp.line, msgtmp.message)
+		fmt.Fprintf(file, "%s [%s] [%s|%s|%d] %s\n", msgtmp.now, IntToLevle(msgtmp.levle), msgtmp.filename, msgtmp.funcName, msgtmp.line, msgtmp.message)
 	} else {
-		fmt.Fprintf(FileOBJ, "%s [%s] %s\n", msgtmp.now, IntToLevle(msgtmp.levle), msgtmp.message)
+		fmt.Fprintf(file, "%s [%s] %s\n", msgtmp.now, IntToLevle(msgtmp.levle), msgtmp.message)
 	}
 }
 

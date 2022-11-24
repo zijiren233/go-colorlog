@@ -13,7 +13,7 @@ var backre, _ = regexp.Compile(`^(\d{4}_\d{2}_\d{2}_\d{2}_\d{2}_\d{2})_(.*?).log
 func (l *logger) deleteBacLog() {
 	files, err := os.ReadDir("./logs")
 	if err != nil {
-		Errorf("索引 logs 文件失败!")
+		Errorf("Index logs file err: %v", err)
 		return
 	}
 	if len(files) <= int(l.maxBackLog) {
