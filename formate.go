@@ -1,16 +1,21 @@
 package colorlog
 
 import (
-	"bufio"
+	"errors"
 	"fmt"
+	"io"
 )
 
-func (l *logger) writeToFile(msgtmp *logmsg, file *bufio.Writer) {
-	if l.levle == L_Debug {
-		fmt.Fprintf(file, "%s [%s] [%s|%s|%d] %s\n", msgtmp.now, IntToLevle(msgtmp.levle), msgtmp.filename, msgtmp.funcName, msgtmp.line, msgtmp.message)
-	} else {
-		fmt.Fprintf(file, "%s [%s] %s\n", msgtmp.now, IntToLevle(msgtmp.levle), msgtmp.message)
+var errFileNil = errors.New("file is nil")
+
+func (l *logger) writeToFile(msgtmp *logmsg, file io.Writer) (n int, err error) {
+	if file == nil {
+		return 0, errFileNil
 	}
+	if l.levle == L_Debug || msgtmp.levle >= L_Error {
+		return fmt.Fprintf(file, "%s [%s] [%s|%s|%d] %s\n", msgtmp.now, IntToLevle(msgtmp.levle), msgtmp.filename, msgtmp.funcName, msgtmp.line, msgtmp.message)
+	}
+	return fmt.Fprintf(file, "%s [%s] %s\n", msgtmp.now, IntToLevle(msgtmp.levle), msgtmp.message)
 }
 
 func (l *logger) logprint(msgtmp *logmsg) {

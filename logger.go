@@ -28,15 +28,16 @@ const (
 )
 
 type logger struct {
-	levle      uint
-	logPrint   bool
-	fileOBJ    *os.File
-	errFileOBJ *os.File
-	logFile    *bufio.Writer
-	errFile    *bufio.Writer
-	stdout     io.Writer
-	message    chan *logmsg
-	maxBackLog uint
+	levle       uint
+	logPrint    bool
+	fileOBJ     *os.File
+	fileSize    int64
+	errFileOBJ  *os.File
+	errFileSize int64
+	logFile     *bufio.Writer
+	stdout      io.Writer
+	message     chan *logmsg
+	maxBackLog  uint
 }
 
 type logmsg struct {
@@ -91,10 +92,19 @@ func (l *logger) fileInit() {
 		l.logprint(&logmsg{levle: L_Fatal, message: "Open err.log err: " + err.Error(), now: time.Now().Format(timeFormate)})
 		panic(err)
 	}
+	fi, err := f.Stat()
+	if err != nil {
+		panic(err)
+	}
+	l.fileSize = fi.Size()
 	l.fileOBJ = f
+	efi, err := ef.Stat()
+	if err != nil {
+		panic(err)
+	}
+	l.errFileSize = efi.Size()
 	l.logFile = bufio.NewWriter(f)
 	l.errFileOBJ = ef
-	l.errFile = bufio.NewWriter(ef)
 }
 
 func logfd(levle uint, format string, a ...interface{}) {
@@ -157,14 +167,21 @@ func (l *logger) backWriteLog() {
 	for msgtmp := range l.message {
 		l.deleteBacLog()
 		l.backupLog()
-		l.writeToFile(msgtmp, l.logFile)
+		n, err := l.writeToFile(msgtmp, l.logFile)
+		l.fileSize += int64(n)
+		if err != nil {
+			continue
+		}
 		if msgtmp.levle >= L_Error {
 			l.backupErrLog()
-			l.writeToFile(msgtmp, l.errFile)
+			n, err := l.writeToFile(msgtmp, l.errFileOBJ)
+			l.errFileSize += int64(n)
+			if err != nil {
+				continue
+			}
 		}
 	}
 	l.logFile.Flush()
 	l.fileOBJ.Close()
-	l.errFile.Flush()
 	l.errFileOBJ.Close()
 }

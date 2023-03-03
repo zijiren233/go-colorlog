@@ -74,7 +74,7 @@ func FileExists(path string) bool {
 func getInfo() (string, string, int) {
 	pc, file, line, ok := runtime.Caller(3)
 	if !ok {
-		return "", "", 0
+		return "???", "???", 0
 	}
 	return path.Base(file), path.Base(runtime.FuncForPC(pc).Name()), line
 }

@@ -1,5 +1,10 @@
 package colorlog
 
+import (
+	"fmt"
+	"runtime/debug"
+)
+
 func Debugf(format string, a ...any) {
 	logfd(L_Debug, format, a...)
 }
@@ -8,7 +13,7 @@ func Infof(format string, a ...any) {
 	logfd(L_Info, format, a...)
 }
 
-func Warringf(format string, a ...any) {
+func Warningf(format string, a ...any) {
 	logfd(L_Warning, format, a...)
 }
 
@@ -17,7 +22,7 @@ func Errorf(format string, a ...any) {
 }
 
 func Fatalf(format string, a ...any) {
-	logfd(L_Fatal, format, a...)
+	logfd(L_Fatal, fmt.Sprint(format, "\n", string(debug.Stack())), a...)
 }
 
 func Debug(a ...any) {
@@ -28,7 +33,7 @@ func Info(a ...any) {
 	logd(L_Info, a...)
 }
 
-func Warring(a ...any) {
+func Warning(a ...any) {
 	logd(L_Warning, a...)
 }
 
@@ -37,5 +42,5 @@ func Error(a ...any) {
 }
 
 func Fatal(a ...any) {
-	logd(L_Fatal, a...)
+	logd(L_Fatal, append(a, string(debug.Stack())))
 }

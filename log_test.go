@@ -10,10 +10,12 @@ func TestLog(test *testing.T) {
 	defer ticker.Stop()
 	for range ticker.C {
 		Info("this is info")
-		Infof("this is info formate: %d", 1)
+		Infof("this is info formate: %d", L_Info)
+		Warning("this is warning")
+		Warningf("this is warning formate: %d", L_Warning)
 		Error("this is err")
-		Errorf("this is err formate: %d", 2)
+		Errorf("this is err formate: %d", L_Error)
 		Fatal("this is fatal")
-		Fatalf("this is fatal formate: %d", 3)
+		Fatalf("this is fatal formate: %d", L_Fatal)
 	}
 }
