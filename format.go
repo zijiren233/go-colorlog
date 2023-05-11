@@ -26,5 +26,5 @@ func (l *logger) logprint(msgtmp *logmsg) {
 }
 
 func Format(time time.Time, levle LogLevle, message string) string {
-	return fmt.Sprintf("%s |%s %s %s| %s\n", time.Format(timeFormate), levleColor(levle), IntToLevle(levle), reset, message)
+	return fmt.Sprintf("%s |%s %s %s| %s", time.Format(timeFormate), levleColor(levle), IntToLevle(levle), reset, message)
 }
