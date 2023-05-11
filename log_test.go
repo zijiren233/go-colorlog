@@ -6,7 +6,7 @@ import (
 )
 
 func TestLog(test *testing.T) {
-	ticker := time.NewTicker(time.Millisecond)
+	ticker := time.NewTicker(time.Millisecond * 10)
 	defer ticker.Stop()
 	for range ticker.C {
 		Info("this is info")

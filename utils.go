@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func levleColor(levle uint) string {
+func levleColor(levle LogLevle) string {
 	switch levle {
 	case L_Debug:
 		return blue
@@ -24,7 +24,7 @@ func levleColor(levle uint) string {
 	}
 }
 
-func LevleToInt(s string) uint {
+func LevleToInt(s string) LogLevle {
 	s = strings.ToLower(s)
 	switch s {
 	case "debug":
@@ -44,7 +44,7 @@ func LevleToInt(s string) uint {
 	}
 }
 
-func IntToLevle(i uint) string {
+func IntToLevle(i LogLevle) string {
 	switch i {
 	case L_Debug:
 		return "DEBUG"

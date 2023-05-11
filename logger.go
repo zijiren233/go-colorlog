@@ -18,8 +18,10 @@ var (
 	nonColorStdout = colorable.NewNonColorable(os.Stdout)
 )
 
+type LogLevle uint
+
 const (
-	L_Debug uint = iota
+	L_Debug LogLevle = iota
 	L_Info
 	L_Warning
 	L_Error
@@ -28,7 +30,7 @@ const (
 )
 
 type logger struct {
-	levle       uint
+	levle       LogLevle
 	logPrint    bool
 	fileOBJ     *os.File
 	fileSize    int64
@@ -41,9 +43,9 @@ type logger struct {
 }
 
 type logmsg struct {
-	levle    uint
+	levle    LogLevle
 	message  string
-	now      string
+	time     time.Time
 	funcName string
 	filename string
 	line     int
@@ -70,7 +72,7 @@ func SetTimeFormate(Formate string) {
 	timeFormate = Formate
 }
 
-func SetLogLevle(levle uint) {
+func SetLogLevle(levle LogLevle) {
 	log.levle = levle
 }
 
@@ -84,12 +86,12 @@ func (l *logger) fileInit() {
 	}
 	f, err := os.OpenFile("./logs/log.log", os.O_APPEND|os.O_WRONLY|os.O_CREATE, os.ModePerm)
 	if err != nil {
-		l.logprint(&logmsg{levle: L_Fatal, message: "Open log.log err: " + err.Error(), now: time.Now().Format(timeFormate)})
+		l.logprint(&logmsg{levle: L_Fatal, message: "Open log.log err: " + err.Error(), time: time.Now()})
 		panic(err)
 	}
 	ef, err := os.OpenFile("./logs/err.log", os.O_APPEND|os.O_WRONLY|os.O_CREATE, os.ModePerm)
 	if err != nil {
-		l.logprint(&logmsg{levle: L_Fatal, message: "Open err.log err: " + err.Error(), now: time.Now().Format(timeFormate)})
+		l.logprint(&logmsg{levle: L_Fatal, message: "Open err.log err: " + err.Error(), time: time.Now()})
 		panic(err)
 	}
 	fi, err := f.Stat()
@@ -107,7 +109,7 @@ func (l *logger) fileInit() {
 	l.errFileOBJ = ef
 }
 
-func logfd(levle uint, format string, a ...interface{}) {
+func logfd(levle LogLevle, format string, a ...interface{}) {
 	if log.levle <= levle {
 		var msg logmsg
 		if log.levle == L_Debug {
@@ -115,7 +117,7 @@ func logfd(levle uint, format string, a ...interface{}) {
 			msg = logmsg{
 				levle:    levle,
 				message:  fmt.Sprintf(format, a...),
-				now:      time.Now().Format(timeFormate),
+				time:     time.Now(),
 				funcName: funcName,
 				filename: filename,
 				line:     line,
@@ -124,7 +126,7 @@ func logfd(levle uint, format string, a ...interface{}) {
 			msg = logmsg{
 				levle:   levle,
 				message: fmt.Sprintf(format, a...),
-				now:     time.Now().Format(timeFormate),
+				time:    time.Now(),
 			}
 		}
 		select {
@@ -135,7 +137,7 @@ func logfd(levle uint, format string, a ...interface{}) {
 	}
 }
 
-func logd(levle uint, a ...interface{}) {
+func logd(levle LogLevle, a ...interface{}) {
 	if log.levle <= levle {
 		var msg logmsg
 		if log.levle == L_Debug {
@@ -143,7 +145,7 @@ func logd(levle uint, a ...interface{}) {
 			msg = logmsg{
 				levle:    levle,
 				message:  fmt.Sprint(a...),
-				now:      time.Now().Format(timeFormate),
+				time:     time.Now(),
 				funcName: funcName,
 				filename: filename,
 				line:     line,
@@ -152,7 +154,7 @@ func logd(levle uint, a ...interface{}) {
 			msg = logmsg{
 				levle:   levle,
 				message: fmt.Sprint(a...),
-				now:     time.Now().Format(timeFormate),
+				time:    time.Now(),
 			}
 		}
 		select {

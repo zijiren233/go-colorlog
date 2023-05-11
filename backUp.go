@@ -20,7 +20,7 @@ func (l *logger) backupLog() error {
 		os.Rename(`./logs/log.log`, fmt.Sprint(`./logs/`, time.Now().Format("2006_01_02_15_04_05_log.log")))
 		f, err := os.OpenFile("./logs/log.log", os.O_APPEND|os.O_WRONLY|os.O_CREATE, os.ModePerm)
 		if err != nil {
-			l.logprint(&logmsg{levle: L_Fatal, message: "Backup ErrLog Err: " + err.Error(), now: time.Now().Format(timeFormate)})
+			l.logprint(&logmsg{levle: L_Fatal, message: "Backup ErrLog Err: " + err.Error(), time: time.Now()})
 			return err
 		}
 		l.fileOBJ = f
@@ -41,7 +41,7 @@ func (l *logger) backupErrLog() error {
 		os.Rename(`./logs/err.log`, fmt.Sprint(`./logs/`, time.Now().Format("2006_01_02_15_04_05_err.log")))
 		f, err := os.OpenFile("./logs/err.log", os.O_APPEND|os.O_WRONLY|os.O_CREATE, os.ModePerm)
 		if err != nil {
-			l.logprint(&logmsg{levle: L_Fatal, message: "Backup ErrLog Err: " + err.Error(), now: time.Now().Format(timeFormate)})
+			l.logprint(&logmsg{levle: L_Fatal, message: "Backup ErrLog Err: " + err.Error(), time: time.Now()})
 			return err
 		}
 		l.errFileOBJ = f
